@@ -39,3 +39,29 @@ server 'konata.mooo.com', user: 'tardis', roles: %w{web app}, my_property: :my_v
 #     # password: 'please use keys'
 #   }
 # setting per server overrides global ssh_options
+
+task :symlink_database_yml do
+  run "rm #{release_path}/config/database.yml"
+  run "ln -sfn #{shared_path}/config/database.yml #{release_path}/config/database.yml"
+end
+after "bundle:install", "symlink_database_yml"
+
+namespace :unicorn do
+  desc "Zero-downtime restart of Unicorn"
+  task :restart, except: { no_release: true } do
+    run "kill -s USR2 `cat /tmp/unicorn.mystore.pid`"
+  end
+
+  desc "Start unicorn"
+  task :start, except: { no_release: true } do
+    run "cd #{current_path} ; bundle exec unicorn_rails -c config/unicorn.rb -D"
+  end
+
+  desc "Stop unicorn"
+  task :stop, except: { no_release: true } do
+    run "kill -s QUIT `cat /tmp/unicorn.mystore.pid`"
+  end
+end
+
+after "deploy:restart", "unicorn:restart"
+
