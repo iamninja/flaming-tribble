@@ -44,6 +44,12 @@ namespace :deploy do
     end
   end
 
+  task :symlink_database_yml do
+    run "rm #{release_path}/config/database.yml"
+    run "ln -sfn #{shared_path}/config/database.yml #{release_path}/config/database.yml"
+  end
+
+  after :publishing, "symlink_database_yml"
   after :publishing, 'deploy:restart'
   after :finishing, 'deploy:cleanup'
 
@@ -57,3 +63,9 @@ namespace :deploy do
   end
 
 end
+
+
+
+
+
+
